@@ -20,7 +20,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-s
 <body>
 <header><div class="wrap nav"><a class="brand" href="#">Projects <span>shelf</span></a><nav><a href="#projects">Projects</a><a href="#code">Code</a><a href="#about">About</a></nav></div></header>
 <main><div class="wrap">
-<section class="hero"><div><div class="eyebrow">Build • Learn • Share</div><h1>Projects by<br><span style="color:var(--accent)">Saumadeep</span></h1><p>A page for my electronics projects, circuits and C++ sketches.</p><div class="actions"><a class="btn" href="#projects">Explore projects ↓</a><a class="btn secondary" href="#code">View source code</a></div></div><div class="circuit-art" aria-label="Decorative microchip illustration"><div class="chip">⌘</div></div></section>
+<section class="hero"><div><div class="eyebrow">Build • Learn • Share</div><h1>Projects by<br><span style="color:var(--accent)">Saumadeep</span></h1><p>A page for electronics projects, circuits and C++ sketches.</p><div class="actions"><a class="btn" href="#projects">Explore projects ↓</a><a class="btn secondary" href="#code">View source code</a></div></div><div class="circuit-art" aria-label="Decorative microchip illustration"><div class="chip">⌘</div></div></section>
 <section id="projects"><div class="section-head"><div><div class="eyebrow">The workshop</div><h2>My projects</h2><p>Browse projects and explore their sketches.</p></div></div>
 <div class="tools"><input id="search" class="search" type="search" placeholder="Search projects…" aria-label="Search projects"><select id="category" class="filter" aria-label="Filter by category"><option value="all">All categories</option><option value="Arduino">Arduino</option><option value="ESP32">ESP32</option><option value="ESP8266">ESP8266</option></select></div>
 <div class="grid" id="projectGrid">
@@ -32,27 +32,293 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-s
 <p class="code-intro">The code areas below are ready for your sketches. Replace the placeholder comments with the actual C++ code for each project.</p>
 <div class="code-grid">
 <div class="code-panel" id="arduino-code"><div class="code-heading"><div><h3>Arduino Robot</h3><div class="filename">arduino_robot.ino</div></div><button class="copy" data-copy="arduinoSource">Copy code</button></div><p class="code-help">Bluetooth-controlled four-legged robot using five servo motors.</p><pre><code id="arduinoSource">// Arduino Robot
-// Add your robot's complete Arduino C++ sketch here.
-// Project: 4 legs, 5 servo motors, Bluetooth control
+#include <Servo.h>
+#include <SoftwareSerial.h>
 
-void setup() {
-  // Add pin setup and Bluetooth initialization.
+// Define servo objects for the 4 legs and lift
+Servo frontLeft;
+Servo frontRight;
+Servo rearLeft;
+Servo rearRight;
+Servo motorup;
+
+// Define Arduino pin connections
+const int PIN_FL = 3;
+const int PIN_FR = 5;
+const int PIN_RL = 6;
+const int PIN_RR = 9;
+const int lift = 11;
+
+// Movement angle configuration
+const int REST_ANGLE = 90;    // Neutral middle position
+const int SWING_FORWARD = 60; // Forward stroke angle
+const int SWING_BACK = 120;  // Backward stroke angle
+const int robot_lift = 0;
+const int down = 75;
+
+SoftwareSerial mySerial(10, 12); // (RX, TX)
+
+// Variable to persist the active state across main loop iterations
+char currentCommand = 'S';
+
+void setup()
+{
+  Serial.begin(9600);
+  mySerial.begin(9600);
+
+  // Attach servos to designated digital pins
+  frontLeft.attach(PIN_FL);
+  frontRight.attach(PIN_FR);
+  rearLeft.attach(PIN_RL);
+  rearRight.attach(PIN_RR);
+  motorup.attach(lift);
+
+  // Set all legs to neutral starting position
+  frontLeft.write(REST_ANGLE);
+  frontRight.write(REST_ANGLE);
+  rearLeft.write(REST_ANGLE);
+  rearRight.write(REST_ANGLE);
+  motorup.write(down);
+
+  delay(1000); // Wait 1 second before starting movement
 }
 
-void loop() {
-  // Add Bluetooth command handling and servo movement.
+void loop()
+{
+  // 1. Check if new serial data has arrived
+  if (mySerial.available() > 0)
+  {
+    char val = mySerial.read();
+
+    // Only update state for valid control commands (filters out '\r' or '\n')
+    if (val == 'F' || val == 'B' || val == 'S' || val == 'R' || val == 'L' )
+    {
+      currentCommand = val;
+      Serial.print("Command changed to: ");
+      Serial.println(currentCommand);
+    }
+  }
+
+  // 2. Execute continuous movement based on the active command state
+  if (currentCommand == 'F')
+  {
+    // Forward Step
+    frontLeft.write(SWING_FORWARD);
+    rearRight.write(SWING_FORWARD);
+    frontRight.write(SWING_BACK);
+    rearLeft.write(SWING_BACK);
+    delay(400);
+
+    motorup.write(robot_lift);
+    delay(400);
+
+    frontLeft.write(SWING_BACK);
+    rearRight.write(SWING_BACK);
+    frontRight.write(SWING_FORWARD);
+    rearLeft.write(SWING_FORWARD);
+    delay(400);
+
+    motorup.write(down);
+    delay(400);
+  }
+  else if (currentCommand == 'B')
+  {
+    // Backward Step
+    frontLeft.write(SWING_BACK);
+    rearRight.write(SWING_BACK);
+    frontRight.write(SWING_FORWARD);
+    rearLeft.write(SWING_FORWARD);
+    delay(400);
+
+    motorup.write(robot_lift);
+    delay(400);
+
+    (SWING_BACK);
+    rearRight.write(SWING_FORWARD);
+    frontLeft.write(SWING_FORWARD);
+    rearLeft.write(SWING_BACK);
+    frontRight.write(SWING_BACK);
+    delay(400);
+
+    motorup.write(down);
+    delay(400);
+  }
+  else if (currentCommand == 'S')
+  {
+    // Stop position
+    frontLeft.write(REST_ANGLE);
+    rearRight.write(REST_ANGLE);
+    frontRight.write(REST_ANGLE);
+    rearLeft.write(REST_ANGLE);
+    motorup.write(down);
+  }
+    else if (currentCommand == 'R')
+  {
+    // Forward Step
+    frontLeft.write(SWING_BACK);
+    rearRight.write(SWING_BACK);
+    frontRight.write(SWING_BACK);
+    rearLeft.write(SWING_BACK);
+    delay(400);
+
+    motorup.write(robot_lift);
+    delay(400);
+
+    frontLeft.write(SWING_FORWARD);
+    rearRight.write(SWING_FORWARD);
+    frontRight.write(SWING_FORWARD);
+    rearLeft.write(SWING_FORWARD);
+    delay(400);
+
+    motorup.write(down);
+    delay(400);
+    
+}else if (currentCommand == 'L')
+  {
+    // Forward Step
+    frontLeft.write(SWING_FORWARD);
+    rearRight.write(SWING_FORWARD);
+    frontRight.write(SWING_FORWARD);
+    rearLeft.write(SWING_FORWARD);
+    delay(400);
+
+    motorup.write(robot_lift);
+    delay(400);
+
+    frontLeft.write(SWING_BACK);
+    rearRight.write(SWING_BACK);
+    frontRight.write(SWING_BACK);
+    rearLeft.write(SWING_BACK);
+    delay(400);
+
+    motorup.write(down);
+    delay(400);}}
 }</code></pre></div>
 <div class="code-panel" id="esp32-code"><div class="code-heading"><div><h3>ESP32 Air Mouse</h3><div class="filename">esp32_air_mouse.ino</div></div><button class="copy" data-copy="esp32Source">Copy code</button></div><p class="code-help">ESP32 air mouse using an MPU6050 motion sensor.</p><pre><code id="esp32Source">// ESP32 Air Mouse
-// Add your complete ESP32 C++ sketch here.
-// Project: ESP32 + MPU6050 gyroscope/accelerometer
+#include <Wire.h>
+#include <HijelHID_BLEMouse.h>
+
+// Define button pins (matching D25 and D26)
+#define LEFT_BTN_PIN 25
+#define RIGHT_BTN_PIN 26
+
+// Initialize Bluetooth Mouse
+HijelBLEMouse mouse("ESP32 Air Mouse", "Custom");
+
+// MPU6500 I2C Address (0x68 if AD0 is grounded, 0x69 if pulled high)
+const uint8_t MPU_ADDR = 0x68; 
+
+// Tuning variables for mouse movement
+const float deadzone = 0.05;     // Ignore minor jitters
+const int sensitivity = 15;      // Cursor speed multiplier
+
+// Variables to track button states
+bool leftWasPressed = false;
+bool rightWasPressed = false;
 
 void setup() {
-  // Add sensor and mouse/Bluetooth initialization.
+  Serial.begin(115200);
+
+  // Start I2C communication on GPIO 21 (SDA) and GPIO 22 (SCL)
+  Wire.begin(21, 22);
+
+  // Start Bluetooth Mouse first so it broadcasts immediately
+  mouse.begin();
+  Serial.println("Bluetooth started. Looking for device...");
+
+  // Setup buttons with internal pull-up resistors
+  pinMode(LEFT_BTN_PIN, INPUT_PULLUP);
+  pinMode(RIGHT_BTN_PIN, INPUT_PULLUP);
+
+  // --- Initialize MPU6500 via Raw I2C ---
+  // 1. Wake up MPU6500 (Clear sleep mode bit in PWR_MGMT_1 register)
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(0x6B); // PWR_MGMT_1 register
+  Wire.write(0x00); // Set to zero to wake up
+  Wire.endTransmission();
+
+  // 2. Set Gyroscope range to ±500 deg/s (GYRO_CONFIG register 0x1B)
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(0x1B);
+  Wire.write(0x08); // 0x08 sets range to 500 deg/s
+  Wire.endTransmission();
+
+  Serial.println("MPU6500 Initialized Successfully!");
 }
 
 void loop() {
-  // Read motion data and update cursor movement.
-}</code></pre></div>
+  // Only process data if the phone/PC is actively connected
+  if (mouse.isConnected()) {
+    
+    /* -----------------------------------
+       1. Handle Mouse Movement (Gyroscope)
+    ----------------------------------- */
+    // Request raw gyroscope data starting from register 0x43
+    Wire.beginTransmission(MPU_ADDR);
+    Wire.write(0x43); 
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU_ADDR, (uint8_t)6); // Request 6 bytes (X_high, X_low, Y_high, Y_low, Z_high, Z_low)
+
+    if (Wire.available() >= 6) {
+      int16_t gyroX_raw = (Wire.read() << 8) | Wire.read();
+      int16_t gyroY_raw = (Wire.read() << 8) | Wire.read();
+      int16_t gyroZ_raw = (Wire.read() << 8) | Wire.read();
+
+      // Convert raw data to radians per second (Scale factor for ±500 dps is 65.5 LSB/(deg/s))
+      float gyroX = (gyroX_raw / 65.5) * (3.14159265 / 180.0); 
+      float gyroZ = (gyroZ_raw / 65.5) * (3.14159265 / 180.0); 
+
+      int16_t vx = 0;
+      int16_t vy = 0;
+
+      if (gyroZ > deadzone || gyroZ < -deadzone) {
+        vx = -gyroZ * sensitivity; 
+      }
+
+      if (gyroX > deadzone || gyroX < -deadzone) {
+        vy = -gyroX * sensitivity; 
+      }
+
+      if (vx != 0 || vy != 0) {
+        mouse.move(vx, vy);
+        
+        // Debug output to Serial Monitor
+        Serial.print("Moving X: "); Serial.print(vx);
+        Serial.print(" | Moving Y: "); Serial.println(vy);
+      }
+    }
+
+    /* -----------------------------------
+       2. Handle Button Clicks
+    ----------------------------------- */
+    bool leftIsPressed = (digitalRead(LEFT_BTN_PIN) == LOW);
+    bool rightIsPressed = (digitalRead(RIGHT_BTN_PIN) == LOW);
+
+    // Left Click logic
+    if (leftIsPressed && !leftWasPressed) {
+      mouse.press(MouseButton::Left);
+      leftWasPressed = true;
+      Serial.println("LEFT Button Pressed");
+    } else if (!leftIsPressed && leftWasPressed) {
+      mouse.release(MouseButton::Left);
+      leftWasPressed = false;
+    }
+
+    // Right Click logic
+    if (rightIsPressed && !rightWasPressed) {
+      mouse.press(MouseButton::Right);
+      rightWasPressed = true;
+      Serial.println("RIGHT Button Pressed");
+    } else if (!rightIsPressed && rightWasPressed) {
+      mouse.release(MouseButton::Right);
+      rightWasPressed = false;
+    }
+
+    delay(15); // Small stabilization delay
+  }
+}
+
+</code></pre></div>
 <div class="code-panel" id="esp8266-code"><div class="code-heading"><div><h3>ESP8266 Smart Plug</h3><div class="filename">esp8266_smart_plug.ino</div></div><button class="copy" data-copy="esp8266Source">Copy code</button></div><p class="code-help">Wi-Fi-controlled smart plug project. Use appropriate electrical isolation and qualified supervision for mains-voltage hardware.</p><pre><code id="esp8266Source">// ESP8266 Smart Plug
 // Add your complete ESP8266 C++ sketch here.
 // Project: Wi-Fi control interface
