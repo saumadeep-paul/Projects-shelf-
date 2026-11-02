@@ -192,11 +192,11 @@ void loop()
     delay(400);
 
     motorup.write(down);
-    delay(400);}}
+    delay(400);}
 }</code></pre></div>
 <div class="code-panel" id="esp32-code"><div class="code-heading"><div><h3>ESP32 Air Mouse</h3><div class="filename">esp32_air_mouse.ino</div></div><button class="copy" data-copy="esp32Source">Copy code</button></div><p class="code-help">ESP32 air mouse using an MPU6050 motion sensor.</p><pre><code id="esp32Source">// ESP32 Air Mouse
-#include <Wire.h>
-#include <HijelHID_BLEMouse.h>
+#include "Wire.h"
+#include "HijelHID_BLEMouse.h"
 
 // Define button pins (matching D25 and D26)
 #define LEFT_BTN_PIN 25
@@ -258,11 +258,11 @@ void loop() {
     Wire.write(0x43); 
     Wire.endTransmission(false);
     Wire.requestFrom(MPU_ADDR, (uint8_t)6); // Request 6 bytes (X_high, X_low, Y_high, Y_low, Z_high, Z_low)
-
+// remove // before 8
     if (Wire.available() >= 6) {
-      int16_t gyroX_raw = (Wire.read() << 8) | Wire.read();
-      int16_t gyroY_raw = (Wire.read() << 8) | Wire.read();
-      int16_t gyroZ_raw = (Wire.read() << 8) | Wire.read();
+      int16_t gyroX_raw = (Wire.read() <<// 8) | Wire.read();
+      int16_t gyroY_raw = (Wire.read() <<// 8) | Wire.read();
+      int16_t gyroZ_raw = (Wire.read() <<// 8) | Wire.read();
 
       // Convert raw data to radians per second (Scale factor for ±500 dps is 65.5 LSB/(deg/s))
       float gyroX = (gyroX_raw / 65.5) * (3.14159265 / 180.0); 
