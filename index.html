@@ -32,8 +32,8 @@ footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-s
 <p class="code-intro">The code areas below are ready for your sketches. Replace the placeholder comments with the actual C++ code for each project.</p>
 <div class="code-grid">
 <div class="code-panel" id="arduino-code"><div class="code-heading"><div><h3>Arduino Robot</h3><div class="filename">arduino_robot.ino</div></div><button class="copy" data-copy="arduinoSource">Copy code</button></div><p class="code-help">Bluetooth-controlled four-legged robot using five servo motors.</p><pre><code id="arduinoSource">// Arduino Robot
-#include <Servo.h>
-#include <SoftwareSerial.h>
+#include "Servo.h"
+#include "SoftwareSerial.h"
 
 // Define servo objects for the 4 legs and lift
 Servo frontLeft;
