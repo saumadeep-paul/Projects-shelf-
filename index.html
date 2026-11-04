@@ -258,11 +258,11 @@ void loop() {
     Wire.write(0x43); 
     Wire.endTransmission(false);
     Wire.requestFrom(MPU_ADDR, (uint8_t)6); // Request 6 bytes (X_high, X_low, Y_high, Y_low, Z_high, Z_low)
-// remove // before 8
+// remove (//) before and after 8
     if (Wire.available() >= 6) {
-      int16_t gyroX_raw = (Wire.read() <<// 8) | Wire.read();
-      int16_t gyroY_raw = (Wire.read() <<// 8) | Wire.read();
-      int16_t gyroZ_raw = (Wire.read() <<// 8) | Wire.read();
+      int16_t gyroX_raw = (Wire.read() //<<// 8) | Wire.read();
+      int16_t gyroY_raw = (Wire.read() //<<// 8) | Wire.read();
+      int16_t gyroZ_raw = (Wire.read() //<<// 8) | Wire.read();
 
       // Convert raw data to radians per second (Scale factor for ±500 dps is 65.5 LSB/(deg/s))
       float gyroX = (gyroX_raw / 65.5) * (3.14159265 / 180.0); 
@@ -320,16 +320,87 @@ void loop() {
 
 </code></pre></div>
 <div class="code-panel" id="esp8266-code"><div class="code-heading"><div><h3>ESP8266 Smart Plug</h3><div class="filename">esp8266_smart_plug.ino</div></div><button class="copy" data-copy="esp8266Source">Copy code</button></div><p class="code-help">Wi-Fi-controlled smart plug project. Use appropriate electrical isolation and qualified supervision for mains-voltage hardware.</p><pre><code id="esp8266Source">// ESP8266 Smart Plug
-// Add your complete ESP8266 C++ sketch here.
-// Project: Wi-Fi control interface
+#include "ESP8266WiFi.h"
+#define relay 4
+
+
+// SoftAP Credentials
+const char *ssid = "ESP8266_smart_plug";
+const char *password = "12##34##56";
+
+// Create Wi-Fi server listening on port 80
+WiFiServer server(80);
 
 void setup() {
-  // Add Wi-Fi and web interface initialization.
+  // Configure relay pin as outputs
+  pinMode(relay, OUTPUT);
+  
+
+  // Stop relay initially
+  digitalWrite(relay, LOW);
+  
+
+  // Create Wi-Fi SoftAP
+  WiFi.softAP(ssid, password);
+
+  // Start the server
+  server.begin();
 }
 
 void loop() {
-  // Add safe low-voltage control logic.
-}</code></pre></div>
+  // Check if a client (phone/browser) has connected
+  WiFiClient client = server.available();
+
+  if (client) {
+    String header = ""; // String to hold incoming HTTP request header
+
+    while (client.connected()) {
+      if (client.available()) {
+        char c = client.read();
+        header += c;
+
+        // Check if the HTTP header end sequence (\r\n\r\n) has arrived
+        if (header.endsWith("\r\n\r\n")) {
+
+          // Parse and execute relay commands inside loop()
+                    //for on
+          if (header.indexOf("switchon") >= 0) {
+            
+            digitalWrite(relay, HIGH);
+            
+          } 
+          else if (header.indexOf("switchoff") >= 0) {
+            // for off
+            digitalWrite(relay, LOW);
+            
+          } 
+          
+
+          // Send standard HTTP response back to client using print instead of println
+          String response = "HTTP/1.1 200 OK\r\n";
+        response += "Content-Type: text/html\r\n";
+        response += "Connection: close\r\n\r\n"; 
+        //replace " ( " with " < " and " ) " with " > "
+        response += "(!DOCTYPE HTML)(html)"\r\n";
+        response += "Command executed.\r\n";
+         //replace " ( " with " < " and " ) " with " > " 
+        response += "(/html)\r\n";
+        
+        client.write((const uint8_t*)response.c_str(), response.length());
+        
+        delay(1);
+        client.stop(); 
+
+          // Exit while loop to close connection
+        }
+      }
+    }
+
+    // Close the connection
+    client.stop();
+  }
+}
+</code></pre></div>
 </div></section>
 <section id="about"><div class="section-head"><div><div class="eyebrow">About</div><h2>Created to create<br>by Saumadeep</h2></div></div><div class="about"><div class="info"><h3>What you'll find here</h3><p>Electronics builds, circuit diagrams, component lists, testing notes, troubleshooting and source code for each project.</p></div><div class="info"><h3>More projects coming soon</h3><p>This is your project portfolio. Add your own project descriptions, photos, wiring diagrams and C++ code as you complete each build.</p></div></div></section>
 </div></main><footer><div class="wrap footer-inner"><span>© <span id="year"></span> Projects by Saumadeep</span><span>Built to share projects and learn together.</span></div></footer>
