@@ -258,11 +258,11 @@ void loop() {
     Wire.write(0x43); 
     Wire.endTransmission(false);
     Wire.requestFrom(MPU_ADDR, (uint8_t)6); // Request 6 bytes (X_high, X_low, Y_high, Y_low, Z_high, Z_low)
-// remove (//) before and after 8
+// replace (double>) before and after 8 with (double<)
     if (Wire.available() >= 6) {
-      int16_t gyroX_raw = (Wire.read() //<<// 8) | Wire.read();
-      int16_t gyroY_raw = (Wire.read() //<<// 8) | Wire.read();
-      int16_t gyroZ_raw = (Wire.read() //<<// 8) | Wire.read();
+      int16_t gyroX_raw = (Wire.read() >> 8) | Wire.read();
+      int16_t gyroY_raw = (Wire.read() >> 8) | Wire.read();
+      int16_t gyroZ_raw = (Wire.read() >> 8) | Wire.read();
 
       // Convert raw data to radians per second (Scale factor for ±500 dps is 65.5 LSB/(deg/s))
       float gyroX = (gyroX_raw / 65.5) * (3.14159265 / 180.0); 
